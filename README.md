@@ -4,6 +4,17 @@ Dockerized [RSNA Clinical Trial Processor (CTP)](https://github.com/johnperry/CT
 
 CTP acts as a DICOM relay between scanners/PACS and XNAT, enabling HTTP transfer and optional de-identification.
 
+## Prerequisites
+
+- **Docker** and **Docker Compose**
+- **XNAT instance** reachable from the CTP container (same Docker network or accessible URL)
+- **dcmtk** (optional, for `storescu` testing) - `brew install dcmtk` or `apt install dcmtk`
+- A Docker network shared with your XNAT instance. If using xnat-docker-compose locally:
+  ```bash
+  # Check your XNAT network name
+  docker network ls | grep xnat
+  ```
+
 ## Quick Start
 
 ```bash
@@ -22,6 +33,38 @@ docker exec ctp tail -20 /opt/ctp/logs/ctp.log
 
 # 5. Check XNAT prearchive
 curl -s -u admin:admin http://your-xnat/data/prearchive/projects | python3 -m json.tool
+```
+
+## Start / Stop / Restart
+
+```bash
+# Start (detached)
+docker-compose up -d
+
+# Stop
+docker-compose down
+
+# Restart (e.g. after config change)
+docker-compose down && docker-compose up -d
+
+# Rebuild image (e.g. after Dockerfile change)
+docker-compose up -d --build
+
+# View container status
+docker-compose ps
+```
+
+## Logs
+
+```bash
+# Follow CTP application logs
+docker exec ctp tail -f /opt/ctp/logs/ctp.log
+
+# View container stdout (startup messages, config mode)
+docker-compose logs -f ctp
+
+# Check for export errors
+docker exec ctp grep -i "error\|fail\|exception" /opt/ctp/logs/ctp.log
 ```
 
 ## Ports
@@ -226,6 +269,54 @@ CTP must be on the same Docker network as XNAT. The default `docker-compose.yml`
 - **XNAT URL must include explicit port** - CTP won't infer default ports. Use `http://host:80` not `http://host`.
 - **Tomcat rejects underscores in hostnames** - Use container IPs instead of Docker container names containing `_`. Find the IP with: `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' container-name`
 - **`contentType="application/zip"` is required** on `HttpExportService` - Without it CTP sends `application/x-mirc` and XNAT rejects with "Unsupported format UNKNOWN".
+
+## Testing
+
+A test script is included to verify the full chain:
+
+```bash
+# Run all tests (sources .env for credentials)
+./test-upload.sh /path/to/file.dcm
+```
+
+The script tests:
+1. DICOM C-STORE to CTP
+2. XNAT JSESSION authentication
+3. Direct DICOM-zip upload to XNAT prearchive
+4. Direct SI handler upload to XNAT archive
+5. CTP admin web UI reachability
+6. CTP export log output
+
+Or test manually:
+
+```bash
+# Send DICOM to CTP
+storescu -v -aec CTP localhost 1085 /path/to/file.dcm
+
+# Check it arrived in XNAT prearchive
+curl -s -u admin:admin http://your-xnat/data/prearchive/projects | python3 -m json.tool
+```
+
+## Troubleshooting
+
+**CTP starts but export fails silently**
+- Check `docker exec ctp tail -50 /opt/ctp/logs/ctp.log` for errors
+- Verify XNAT URL includes explicit port (`:80`, `:443`)
+- Verify CTP can reach XNAT: `docker exec ctp curl -s http://your-xnat:80/data/JSESSION`
+
+**"Unsupported format UNKNOWN" from XNAT**
+- Ensure `contentType="application/zip"` is set on the `HttpExportService` in `config.xml`
+
+**"Device or resource busy" on config.xml**
+- Don't mount `config.xml` as read-write and try to `sed` it. Use the template mode (mount to `config-template/`) or custom mode (mount a finished config)
+
+**DICOM association rejected**
+- Check the called AE title matches: `storescu -v -aec CTP localhost 1085 file.dcm`
+- Check the port matches the `DicomImportService` port in `config.xml`
+
+**Container can't reach XNAT**
+- Verify both containers are on the same Docker network: `docker network inspect <network-name>`
+- If XNAT container name has underscores, use its IP address instead (Tomcat rejects underscores in hostnames)
 
 ## Files
 
