@@ -279,18 +279,37 @@ CTP must be on the same Docker network as XNAT. The default `docker-compose.yml`
 
 A test script is included to verify the full chain:
 
+### Automated Verification
+
+`verify-upload.sh` sends the bundled TCIA test data through CTP and verifies it arrives in XNAT:
+
 ```bash
-# Run all tests (sources .env for credentials)
-./test-upload.sh /path/to/file.dcm
+# Uses XNAT_URL from .env
+./verify-upload.sh
+
+# Override XNAT URL if .env has a Docker-internal address
+XNAT_VERIFY_URL=http://your-xnat:port ./verify-upload.sh
+
+# Use your own DICOM files
+./verify-upload.sh /path/to/custom/*.dcm
 ```
 
-The script tests:
-1. DICOM C-STORE to CTP
-2. XNAT JSESSION authentication
-3. Direct DICOM-zip upload to XNAT prearchive
-4. Direct SI handler upload to XNAT archive
-5. CTP admin web UI reachability
-6. CTP export log output
+The script checks:
+1. CTP admin UI reachable
+2. XNAT authentication
+3. DICOM C-STORE to CTP succeeds
+4. Data appears in XNAT prearchive
+5. Session details correct
+6. No export errors in CTP log
+
+### Manual Testing
+
+`test-upload.sh` runs individual tests against CTP and XNAT:
+
+```bash
+# Sources .env for credentials
+./test-upload.sh /path/to/file.dcm
+```
 
 Or test manually:
 
