@@ -24,8 +24,8 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
     set +a
 fi
 
-# For verification we need the host-accessible XNAT URL (not the Docker-internal one)
-XNAT_VERIFY_URL="${XNAT_VERIFY_URL:-http://localhost:8181}"
+# Use XNAT_URL from .env (override with XNAT_VERIFY_URL for Docker-internal addresses)
+XNAT_VERIFY_URL="${XNAT_VERIFY_URL:-$XNAT_URL}"
 XNAT_USER="${XNAT_USERNAME:-admin}"
 XNAT_PASS="${XNAT_PASSWORD:-admin}"
 CTP_HOST="localhost"
