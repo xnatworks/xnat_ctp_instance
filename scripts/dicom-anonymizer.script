@@ -1,29 +1,57 @@
 # CTP DICOM Anonymizer Script
-# This is a minimal pass-through script that preserves all DICOM tags.
-# Modify this script to anonymize/remove specific tags as needed.
+# De-identifies DICOM tags for safe transfer to XNAT.
 #
-# Syntax:
-#   @keep()           - keep the element unchanged
-#   @remove()         - remove the element
-#   @empty()          - set the element to empty
-#   @hash(root,tag)   - hash the value
-#   @encrypt(tag,key) - encrypt the value
-#   @round(tag,group) - round the value
-#   @always()         - always include the element
-#   @require()        - require the element
+# This profile hashes patient identifiers, removes dates and
+# institution info, and preserves clinical/imaging tags.
 #
-# For full anonymization, see:
+# For full reference see:
 # https://mircwiki.rsna.org/index.php?title=The_CTP_DICOM_Anonymizer
-#
 # ============================================================
-# DEFAULT: Pass all tags through unchanged (no anonymization)
-# ============================================================
-# Uncomment and modify lines below to enable anonymization.
-#
-# Example anonymization rules:
-# PatientName       : @hash(siteid,this)
-# PatientID         : @hash(siteid,this)
-# PatientBirthDate  : @remove()
-# InstitutionName   : @empty()
-# ReferringPhysicianName : @empty()
-# ============================================================
+
+# --- Patient Identifiers ---
+# Hash to consistent pseudonyms (reversible via CTP lookup table)
+PatientName                : @hash(siteid,this)
+PatientID                  : @hash(siteid,this)
+OtherPatientIDs            : @remove()
+OtherPatientNames          : @remove()
+
+# --- Dates ---
+PatientBirthDate           : @remove()
+PatientBirthTime           : @remove()
+
+# --- Institution / Personnel ---
+InstitutionName            : @empty()
+InstitutionAddress         : @empty()
+InstitutionalDepartmentName : @empty()
+ReferringPhysicianName     : @empty()
+PerformingPhysicianName    : @empty()
+OperatorsName              : @empty()
+PhysiciansOfRecord         : @empty()
+NameOfPhysiciansReadingStudy : @empty()
+RequestingPhysician        : @empty()
+StationName                : @empty()
+
+# --- Study / Series (keep for XNAT routing) ---
+StudyInstanceUID           : @keep()
+SeriesInstanceUID          : @keep()
+SOPInstanceUID             : @keep()
+StudyID                    : @keep()
+StudyDescription           : @keep()
+SeriesDescription          : @keep()
+AccessionNumber            : @remove()
+StudyDate                  : @keep()
+StudyTime                  : @keep()
+SeriesDate                 : @keep()
+SeriesTime                 : @keep()
+
+# --- Imaging Parameters (preserve) ---
+Modality                   : @keep()
+Manufacturer               : @keep()
+ManufacturerModelName      : @keep()
+MagneticFieldStrength      : @keep()
+SliceThickness             : @keep()
+RepetitionTime             : @keep()
+EchoTime                   : @keep()
+ImageType                  : @keep()
+BodyPartExamined           : @keep()
+ProtocolName               : @keep()

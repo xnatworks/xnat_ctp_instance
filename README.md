@@ -150,7 +150,45 @@ Scanner/PACS --DICOM C-STORE--> CTP:1085
 
 ### Anonymization
 
-Edit `scripts/dicom-anonymizer.script` to add de-identification rules. The default script passes all tags through unchanged. See the [CTP DICOM Anonymizer docs](https://mircwiki.rsna.org/index.php?title=The_CTP_DICOM_Anonymizer) for syntax.
+The `DicomAnonymizer` stage is configured by `scripts/dicom-anonymizer.script`. By default it passes all DICOM tags through unchanged (no anonymization). The script is bind-mounted, so edits take effect on container restart.
+
+To enable anonymization, add rules to the script file using the format `TagName : @action()`:
+
+```
+# Hash patient identifiers (reversible with the lookup table)
+PatientName            : @hash(siteid,this)
+PatientID              : @hash(siteid,this)
+
+# Remove sensitive dates
+PatientBirthDate       : @remove()
+
+# Clear institution info
+InstitutionName        : @empty()
+InstitutionAddress     : @empty()
+ReferringPhysicianName : @empty()
+
+# Keep clinical tags unchanged
+Modality               : @keep()
+StudyDescription       : @keep()
+SeriesDescription      : @keep()
+```
+
+Available actions:
+
+| Action | Effect |
+|--------|--------|
+| `@keep()` | Preserve unchanged |
+| `@remove()` | Delete the tag |
+| `@empty()` | Set to empty string |
+| `@hash(root,tag)` | Replace with a hash (consistent per root) |
+| `@encrypt(tag,key)` | Encrypt the value |
+| `@round(tag,group)` | Round numeric/date values |
+| `@always()` | Always include in output |
+| `@require()` | Require the tag to exist |
+
+The anonymizer script can also be edited live through the CTP admin UI at `http://localhost:1080` → **DICOM Anonymizer** servlet.
+
+For full documentation see the [CTP DICOM Anonymizer reference](https://mircwiki.rsna.org/index.php?title=The_CTP_DICOM_Anonymizer).
 
 ### HTTP Export to XNAT
 
