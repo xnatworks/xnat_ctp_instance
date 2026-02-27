@@ -22,16 +22,19 @@ CTP acts as a DICOM relay between scanners/PACS and XNAT, enabling HTTP transfer
 cp .env.example .env
 # Edit .env with your XNAT URL and credentials
 
-# 2. Start CTP
+# 2. Create runtime directories
+mkdir -p roots quarantines logs
+
+# 3. Start CTP
 docker-compose up -d
 
-# 3. Send DICOM to CTP
+# 4. Send DICOM to CTP
 storescu -v -aec CTP localhost 1085 /path/to/file.dcm
 
-# 4. Check CTP logs
-docker exec ctp tail -20 /opt/ctp/logs/ctp.log
+# 5. Check CTP logs
+tail -20 logs/ctp.log
 
-# 5. Check XNAT prearchive
+# 6. Check XNAT prearchive
 curl -s -u admin:admin http://your-xnat/data/prearchive/projects | python3 -m json.tool
 ```
 
@@ -56,15 +59,17 @@ docker-compose ps
 
 ## Logs
 
+Logs are bind-mounted to `./logs/` so you can read them directly from the host:
+
 ```bash
 # Follow CTP application logs
-docker exec ctp tail -f /opt/ctp/logs/ctp.log
+tail -f logs/ctp.log
 
 # View container stdout (startup messages, config mode)
 docker-compose logs -f ctp
 
 # Check for export errors
-docker exec ctp grep -i "error\|fail\|exception" /opt/ctp/logs/ctp.log
+grep -i "error\|fail\|exception" logs/ctp.log
 ```
 
 ## Ports
@@ -300,7 +305,7 @@ curl -s -u admin:admin http://your-xnat/data/prearchive/projects | python3 -m js
 ## Troubleshooting
 
 **CTP starts but export fails silently**
-- Check `docker exec ctp tail -50 /opt/ctp/logs/ctp.log` for errors
+- Check `tail -50 logs/ctp.log` for errors
 - Verify XNAT URL includes explicit port (`:80`, `:443`)
 - Verify CTP can reach XNAT: `docker exec ctp curl -s http://your-xnat:80/data/JSESSION`
 
@@ -329,5 +334,8 @@ curl -s -u admin:admin http://your-xnat/data/prearchive/projects | python3 -m js
 ├── scripts/
 │   └── dicom-anonymizer.script         # Anonymization rules (pass-through default)
 ├── start.sh                            # Entrypoint: config substitution + CTP launch
-└── test-upload.sh                      # Test script for DICOM upload verification
+├── test-upload.sh                      # Test script for DICOM upload verification
+├── roots/                              # Runtime: DICOM files being processed (created by user)
+├── quarantines/                        # Runtime: files that failed processing (created by user)
+└── logs/                               # Runtime: CTP application logs (created by user)
 ```

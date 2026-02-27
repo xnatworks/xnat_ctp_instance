@@ -10,9 +10,9 @@ services:
       - "1085:1085"   # DICOM import (receive from scanners/PACS)
       - "1080:1080"   # CTP admin web interface
     volumes:
-      - ctp-roots:/opt/ctp/roots
-      - ctp-quarantines:/opt/ctp/quarantines
-      - ctp-logs:/opt/ctp/logs
+      - ./roots:/opt/ctp/roots
+      - ./quarantines:/opt/ctp/quarantines
+      - ./logs:/opt/ctp/logs
       # Template mode: config.xml with __PLACEHOLDER__ values, substituted at startup
       # For custom mode (e.g. multi-pipeline), replace this line with:
       #   - ./my-config.xml:/opt/ctp/config.xml
@@ -28,12 +28,6 @@ services:
     restart: unless-stopped
     networks:
       - xnat_docker_compose_default
-
-volumes:
-  ctp-roots:
-  ctp-quarantines:
-  ctp-logs:
-
 networks:
   xnat_docker_compose_default:
     external: true

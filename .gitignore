@@ -1,10 +1,10 @@
 # Don't commit credentials
 .env
 
-# Docker volumes
-ctp-roots/
-ctp-quarantines/
-ctp-logs/
+# CTP runtime data
+roots/
+quarantines/
+logs/
 
 # Working notes
 HANDOFF.md
