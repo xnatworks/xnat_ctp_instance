@@ -203,9 +203,24 @@ Content-Type: application/zip
 
 CTP supports multiple pipelines, each with its own DICOM listener port, AE title, and export target. This requires custom mode (mounting your own `config.xml`).
 
-### Example: Two AE Titles Routing to Two XNATs
+### Multiple AE Titles to the Same XNAT
 
-Create a custom config with two pipelines. Each pipeline listens on a different port with a different called AE title and exports to a different XNAT:
+If you just need multiple AE titles going to the **same** XNAT, add multiple `<accept>` elements to a single pipeline:
+
+```xml
+<DicomImportService ... port="1085">
+    <accept calledAET="SCANNER_A"/>
+    <accept calledAET="SCANNER_B"/>
+</DicomImportService>
+```
+
+Both AE titles share the same port, pipeline, anonymizer, and export target.
+
+### Multiple AE Titles to Different XNATs
+
+To route different AE titles to **different** XNAT instances, you need separate pipelines on separate ports. Each pipeline gets its own port, AE title, root/quarantine directories, and export target.
+
+Create a custom config with two pipelines:
 
 ```xml
 <Configuration>
