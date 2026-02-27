@@ -34,10 +34,15 @@ echo "DICOM file: $DICOM_FILE ($(stat -c%s "$DICOM_FILE" 2>/dev/null || stat -f%
 echo ""
 echo "--- Test 1: Send DICOM to CTP (port $CTP_PORT) ---"
 if command -v storescu &>/dev/null; then
+    echo "Using: dcmtk storescu"
     storescu -v -aec "$CTP_AET" "$CTP_HOST" "$CTP_PORT" "$DICOM_FILE" 2>&1
     echo "Result: $?"
+elif [ -x "$SCRIPT_DIR/tools/storescu" ]; then
+    echo "Using: dcm4che storescu (bundled)"
+    "$SCRIPT_DIR/tools/storescu" -c "$CTP_AET@$CTP_HOST:$CTP_PORT" "$DICOM_FILE" 2>&1
+    echo "Result: $?"
 else
-    echo "SKIP: storescu not installed (apt install dcmtk)"
+    echo "SKIP: No storescu found (install dcmtk or use bundled tools/storescu)"
 fi
 
 # ---- Test 2: XNAT JSESSION auth ----

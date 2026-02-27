@@ -98,12 +98,18 @@ echo "  Sessions in prearchive: $BEFORE_COUNT"
 
 # --- Test 4: Send DICOM to CTP ---
 echo "--- 4. Send ${#DICOM_FILES[@]} DICOM files to CTP via C-STORE ---"
-if ! command -v storescu &>/dev/null; then
-    result "FAIL" "storescu not installed (brew install dcmtk / apt install dcmtk)"
+if command -v storescu &>/dev/null; then
+    STORESCU_CMD="storescu -aec $CTP_AET $CTP_HOST $CTP_PORT"
+    echo "  Using: dcmtk storescu"
+elif [ -x "$SCRIPT_DIR/tools/storescu" ]; then
+    STORESCU_CMD="$SCRIPT_DIR/tools/storescu -c $CTP_AET@$CTP_HOST:$CTP_PORT"
+    echo "  Using: dcm4che storescu (bundled)"
+else
+    result "FAIL" "No storescu found (install dcmtk or use bundled tools/storescu)"
     exit 1
 fi
 
-STORE_OUTPUT=$(storescu -aec "$CTP_AET" "$CTP_HOST" "$CTP_PORT" "${DICOM_FILES[@]}" 2>&1)
+STORE_OUTPUT=$($STORESCU_CMD "${DICOM_FILES[@]}" 2>&1)
 STORE_RC=$?
 if [ $STORE_RC -eq 0 ]; then
     result "PASS" "storescu completed successfully (exit code 0)"
