@@ -1,0 +1,11 @@
+# Don't commit credentials
+.env
+
+# Docker volumes
+ctp-roots/
+ctp-quarantines/
+ctp-logs/
+
+# Working notes
+HANDOFF.md
+PROMPTS.md

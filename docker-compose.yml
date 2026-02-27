@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  ctp:
+    container_name: ctp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "1085:1085"   # DICOM import (receive from scanners/PACS)
+      - "1080:1080"   # CTP admin web interface
+    volumes:
+      - ctp-roots:/opt/ctp/roots
+      - ctp-quarantines:/opt/ctp/quarantines
+      - ctp-logs:/opt/ctp/logs
+      # Template mode: config.xml with __PLACEHOLDER__ values, substituted at startup
+      # For custom mode (e.g. multi-pipeline), replace this line with:
+      #   - ./my-config.xml:/opt/ctp/config.xml
+      - ./config.xml:/opt/ctp/config-template/config.xml:ro
+      - ./scripts:/opt/ctp/scripts
+    environment:
+      - CTP_DICOM_PORT=${CTP_DICOM_PORT:-1085}
+      - CTP_HTTP_PORT=${CTP_HTTP_PORT:-1080}
+      - XNAT_URL=${XNAT_URL:-http://xnat_docker_compose-xnat-nginx-1:80}
+      - XNAT_USERNAME=${XNAT_USERNAME:-admin}
+      - XNAT_PASSWORD=${XNAT_PASSWORD:-admin}
+      - XNAT_PROJECT=${XNAT_PROJECT:-/prearchive/projects/CTP}
+    restart: unless-stopped
+    networks:
+      - xnat_docker_compose_default
+
+volumes:
+  ctp-roots:
+  ctp-quarantines:
+  ctp-logs:
+
+networks:
+  xnat_docker_compose_default:
+    external: true

@@ -1,0 +1,29 @@
+# CTP DICOM Anonymizer Script
+# This is a minimal pass-through script that preserves all DICOM tags.
+# Modify this script to anonymize/remove specific tags as needed.
+#
+# Syntax:
+#   @keep()           - keep the element unchanged
+#   @remove()         - remove the element
+#   @empty()          - set the element to empty
+#   @hash(root,tag)   - hash the value
+#   @encrypt(tag,key) - encrypt the value
+#   @round(tag,group) - round the value
+#   @always()         - always include the element
+#   @require()        - require the element
+#
+# For full anonymization, see:
+# https://mircwiki.rsna.org/index.php?title=The_CTP_DICOM_Anonymizer
+#
+# ============================================================
+# DEFAULT: Pass all tags through unchanged (no anonymization)
+# ============================================================
+# Uncomment and modify lines below to enable anonymization.
+#
+# Example anonymization rules:
+# PatientName       : @hash(siteid,this)
+# PatientID         : @hash(siteid,this)
+# PatientBirthDate  : @remove()
+# InstitutionName   : @empty()
+# ReferringPhysicianName : @empty()
+# ============================================================

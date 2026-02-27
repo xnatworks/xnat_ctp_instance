@@ -1,0 +1,43 @@
+<Configuration>
+    <Server
+        maxThreads="20"
+        port="__CTP_HTTP_PORT__"/>
+    <Pipeline name="XNAT Relay Pipeline">
+        <DicomImportService
+            class="org.rsna.ctp.stdstages.DicomImportService"
+            logConnections="no"
+            name="DICOM Import from Scanner"
+            port="__CTP_DICOM_PORT__"
+            quarantine="quarantines/dicom-import"
+            root="roots/dicom-import">
+            <accept calledAET="CTP"/>
+        </DicomImportService>
+        <DicomAnonymizer
+            name="DICOM Anonymizer"
+            class="org.rsna.ctp.stdstages.DicomAnonymizer"
+            root="roots/anonymizer"
+            script="scripts/dicom-anonymizer.script"
+            quarantine="quarantines/anonymizer" />
+        <HttpExportService
+            acceptXmlObjects="no"
+            acceptZipObjects="no"
+            class="org.rsna.ctp.stdstages.HttpExportService"
+            name="HTTP Export to XNAT"
+            quarantine="quarantines/http-export"
+            root="roots/http-export"
+            sendDigestHeader="yes"
+            contentType="application/zip"
+            interval="5000"
+            url="__XNAT_URL__/data/services/import?import-handler=DICOM-zip&amp;inbody=true">
+            <compressor
+                cacheSize="100"
+                defaultString="unknown"
+                structure="(0010,0020).(0008,0060).(0008,0020).(0008,0030).(0020,0011).(0020,0013).(0019,10A2)"/>
+            <xnat
+                cookieName="JSESSIONID"
+                password="__XNAT_PASSWORD__"
+                url="__XNAT_URL__/data/JSESSION"
+                username="__XNAT_USERNAME__"/>
+        </HttpExportService>
+    </Pipeline>
+</Configuration>
