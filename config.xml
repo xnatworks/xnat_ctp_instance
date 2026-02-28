@@ -10,7 +10,7 @@
             port="__CTP_DICOM_PORT__"
             quarantine="quarantines/dicom-import"
             root="roots/dicom-import">
-            <accept calledAET="CTP"/>
+            <accept calledAET="XNAT"/>
         </DicomImportService>
         <DicomAnonymizer
             name="DICOM Anonymizer"

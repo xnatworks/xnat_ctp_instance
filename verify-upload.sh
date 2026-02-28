@@ -30,7 +30,7 @@ XNAT_USER="${XNAT_USERNAME:-admin}"
 XNAT_PASS="${XNAT_PASSWORD:-admin}"
 CTP_HOST="localhost"
 CTP_PORT="${CTP_DICOM_PORT:-1085}"
-CTP_AET="CTP"
+CTP_AET="XNAT"
 
 # Test data
 if [ $# -gt 0 ]; then
@@ -71,6 +71,19 @@ else
     result "FAIL" "CTP admin UI returned HTTP $HTTP_CODE"
     echo "  Is CTP running? Try: ./restart.sh"
     exit 1
+fi
+
+# --- Test 1b: AE title matches running CTP config ---
+RUNNING_AET=$(docker exec ctp grep -o 'calledAET="[^"]*"' /opt/ctp/config.xml 2>/dev/null | head -1 | sed 's/calledAET="//;s/"//')
+if [ -z "$RUNNING_AET" ]; then
+    # Fallback: check local config file
+    RUNNING_AET=$(grep -o 'calledAET="[^"]*"' "$SCRIPT_DIR/config.xml" 2>/dev/null | head -1 | sed 's/calledAET="//;s/"//')
+fi
+if [ -n "$RUNNING_AET" ] && [ "$RUNNING_AET" != "$CTP_AET" ]; then
+    result "FAIL" "AE title mismatch: script uses '$CTP_AET' but running CTP accepts '$RUNNING_AET' (restart CTP?)"
+    exit 1
+else
+    result "PASS" "AE title '$CTP_AET' matches running CTP config"
 fi
 
 # --- Test 2: XNAT auth ---
